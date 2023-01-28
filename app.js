@@ -14,6 +14,7 @@ class App{
         this.$shareBtn = document.querySelector(".share-btn");
         this.$closeBtn = document.querySelector(".close-btn");
         this.$postFiles = document.querySelector("#post-files");
+        this.$modal = document.querySelector(".modal");
         this.ui = new firebaseui.auth.AuthUI(auth);
         this.handleAuth();
         this.addEventListeners();
@@ -38,7 +39,6 @@ class App{
         this.$loginUI.style.display = "none"; // hide login ui
         this.$uploadSection.style.display = "none"; //hide upload section
         this.getFeed();
-        // this.displayFeed();
     }
 
     redirectToLogin(){
@@ -70,7 +70,7 @@ class App{
         this.$logoutBtn.addEventListener("click", (event)=>{
             event.preventDefault();
             this.logout();
-        });
+        }); 
 
         //add event listener for the create post button
         this.$createBtn.addEventListener("click", (event)=>{
@@ -119,11 +119,11 @@ class App{
                         function complete(){
                             document.getElementById("uploading").innerHTML += `${files[i].name} uploaded <br />`;
                             getFileUrl(files[i].name);
-                            var postCaption = document.getElementById("post-caption").value;
+                            var  postCaption = document.getElementById("post-caption").value;
                             var fileLink = document.getElementById("post-files").getAttribute("value");
 
                             app.addPost({caption:postCaption,imageLink:fileLink}); // add post to posts array
-                            document.getElementById("post-files").removeAttribute("value"); // remove image link from value attr
+                            document.getElementById("post-files").setAttribute("value", ""); // remove image link from value attr
                             app.savePost(); // save post to database
                             
                         }
@@ -188,6 +188,15 @@ class App{
         // this.displayFeed();
     }
 
+        // add functionality to more options button
+    addMoreOptions(){
+      document.querySelector(".more-btn").addEventListener("click", (event)=>{
+        this.$modal.style.display = "block";
+        this.$modal.style.visibility = "visible";
+      });
+    
+    }
+
 
 
     //get user posts
@@ -239,7 +248,7 @@ class App{
               </div>
               <div class="options">
                 <div
-                  class="Igw0E rBNOH YBx95 _4EzTm"
+                  class="Igw0E rBNOH YBx95 _4EzTm more-btn"
                   style="height: 24px; width: 24px"
                 >
                   <svg
@@ -377,6 +386,7 @@ class App{
             </div>
           </div>`
         ).join("");
+        this.addMoreOptions(); // add functionality to more options button
     }
     
 }
