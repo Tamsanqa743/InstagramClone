@@ -15,6 +15,7 @@ class App{
         this.$closeBtn = document.querySelector(".close-btn");
         this.$postFiles = document.querySelector("#post-files");
         this.$modal = document.querySelector(".modal");
+        this.$cancelBtn = document.querySelector(".cancel");
         this.ui = new firebaseui.auth.AuthUI(auth);
         this.handleAuth();
         this.addEventListeners();
@@ -147,6 +148,11 @@ class App{
                 console.log(error);
             });
         }
+
+        //close options modal
+        this.$cancelBtn.addEventListener("click", (event)=>{
+          this.$modal.style.visibility = "hidden";
+        })
     }
 
     //redirect user to post page
@@ -188,16 +194,18 @@ class App{
         // this.displayFeed();
     }
 
-        // add functionality to more options button
+    // add functionality to more options button
     addMoreOptions(){
-      document.querySelector(".more-btn").addEventListener("click", (event)=>{
-        this.$modal.style.display = "block";
-        this.$modal.style.visibility = "visible";
-      });
+      let elementsList = document.getElementsByClassName("more-btn");
+      for (let i = 0; i < elementsList.length; i++) { 
+          elementsList[i].addEventListener("click", ()=>{
+          this.$modal.style.display = "block";
+          this.$modal.style.visibility = "visible"; 
+
+        });
+      }
     
     }
-
-
 
     //get user posts
     getFeed(){
@@ -249,7 +257,7 @@ class App{
               <div class="options">
                 <div
                   class="Igw0E rBNOH YBx95 _4EzTm more-btn"
-                  style="height: 24px; width: 24px"
+                  style="height: 24px; width: 24px; cursor:pointer;"
                 >
                   <svg
                     aria-label="More options"
