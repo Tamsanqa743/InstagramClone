@@ -1,247 +1,285 @@
 
-class App{
-    constructor(){
+class App {
+  constructor() {
 
-        this.userId = "";
-        this.posts = [];
-        this.imageUrl = "";
+    this.userId = "";
+    this.posts = [];
+    this.following = [];
+    this.imageUrl = "";
 
-        this.$loginUI = document.querySelector("#login-ui");
-        this.$mainContainer = document.querySelector(".main-container");
-        this.$logoutBtn = document.querySelector("#logout-btn");
-        this.$uploadSection = document.querySelector("#upload-form");
-        this.$createBtn = document.querySelector(".create-post");
-        this.$shareBtn = document.querySelector(".share-btn");
-        this.$closeBtn = document.querySelector(".close-btn");
-        this.$postFiles = document.querySelector("#post-files");
-        this.$modal = document.querySelector(".modal");
-        this.$cancelBtn = document.querySelector(".cancel");
-        this.ui = new firebaseui.auth.AuthUI(auth);
-        this.handleAuth();
-        this.addEventListeners();
-    }
+    this.$loginUI = document.querySelector("#login-ui");
+    this.$mainContainer = document.querySelector(".main-container");
+    this.$logoutBtn = document.querySelector("#logout-btn");
+    this.$uploadSection = document.querySelector("#upload-form");
+    this.$createBtn = document.querySelector(".create-post");
+    this.$shareBtn = document.querySelector(".share-btn");
+    this.$closeBtn = document.querySelector(".close-btn");
+    this.$postFiles = document.querySelector("#post-files");
+    this.$modal = document.querySelector(".modal");
+    this.$cancelBtn = document.querySelector(".cancel");
+    this.$delete = document.querySelector(".delete");
+    this.ui = new firebaseui.auth.AuthUI(auth);
+    this.handleAuth();
+    this.addEventListeners();
+  }
 
-    handleAuth(){
-        firebase.auth().onAuthStateChanged((user)=>{
-            if(user){
-                this.userId = String(user.uid);
-                this.redirectToApp();
+  handleAuth() {
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+        this.userId = String(user.uid);
+        this.redirectToApp();
 
-            }
-            else{
-                // user must sign-in
-                this.redirectToLogin();
-            }
-        })
-    }
-
-    redirectToApp(){
-        this.$mainContainer.style.display = "block"; // show main container div
-        this.$loginUI.style.display = "none"; // hide login ui
-        this.$uploadSection.style.display = "none"; //hide upload section
-        this.getFeed();
-    }
-
-    redirectToLogin(){
-        this.$loginUI.style.display = "block"; // show login ui
-        this.$mainContainer.style.display = "none"; // hide main container
-        this.$uploadSection.style.display = "none"; // hide upload section
-        this.ui.start('#login-ui', {
-            callbacks:{
-                signInSuccessWithResult:(authResult, redirectUrl)=>{
-                    this.userId = authResult.user.uid; // set userId to uid of logged in user
-                    this.redirectToApp();
-                }
-            },
-            signInOptions: [
-              firebase.auth.EmailAuthProvider.PROVIDER_ID,
-              firebase.auth.GoogleAuthProvider.PROVIDER_ID
-            ],
-          });
-    }
-
-    redirectToUpload(){
-        this.$mainContainer.style.display = "none"; // hide main content container
-        this.$uploadSection.style.display = "block"; // show upload section
-    }
-    // add event listerners to the document
-    addEventListeners(){
-        var files = [];
-        // addd event listener for the logout button
-        this.$logoutBtn.addEventListener("click", (event)=>{
-            event.preventDefault();
-            this.logout();
-        }); 
-
-        //add event listener for the create post button
-        this.$createBtn.addEventListener("click", (event)=>{
-            event.preventDefault();
-            this.createPost();
-
-        });
-
-        this.$closeBtn.addEventListener("click", (event)=>{
-            event.preventDefault();
-            //close create page and redirect to home
-            this.redirectToApp();
-        });
-        
-        this.$postFiles.addEventListener("change", function(e){
-            files = e.target.files;
-            for (let i = 0; i < files.length; i++){
-                console.log(files[i]);
-            }
-        });
-
-        this.$shareBtn.addEventListener("click", function(){
-           
-            //check if files are selected
-            if(files.length != 0){
-                //go through all selected files
-                for (let i = 0; i < files.length; i++){
-                    //create storage reference
-                    var storage = firebase.storage().ref(files[i].name);
-
-                    // upload file
-                    var upload = storage.put(files[i]);
-
-                    //update progress bar
-                    upload.on(
-                        "state_changed",
-                        function progress(snapshot){
-                            var percentage = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                            document.getElementById("progress").value = percentage;
-
-                        },
-
-                        function error(){
-                            alert("error uploading file");
-                        },
-                        function complete(){
-                            document.getElementById("uploading").innerHTML += `${files[i].name} uploaded <br />`;
-                            getFileUrl(files[i].name);
-                            var  postCaption = document.getElementById("post-caption").value;
-                            var fileLink = document.getElementById("post-files").getAttribute("value");
-
-                            app.addPost({caption:postCaption,imageLink:fileLink}); // add post to posts array
-                            document.getElementById("post-files").setAttribute("value", ""); // remove image link from value attr
-                            app.savePost(); // save post to database
-                            
-                        }
-                    );
-                }
-            }
-            else{
-                alert("No file chosen");
-            }
-        });
-
-        function getFileUrl(filename){
-            // create storage reference
-            var storage = firebase.storage().ref(filename);
-            //get file url
-            storage.getDownloadURL().then(function(url){
-                document.getElementById("post-files").setAttribute("value",url);
-                
-            }).catch(function(error){
-                console.log("error encountered");
-                console.log(error);
-            });
-        }
-
-        //close options modal
-        this.$cancelBtn.addEventListener("click", (event)=>{
-          this.$modal.style.visibility = "hidden";
-        })
-    }
-
-    //redirect user to post page
-    createPost(){
-        this.$mainContainer.style.display = "none";
-        this.$uploadSection.style.display = "block";
-        this.$uploadSection.style.margin = "50px 0px 0px 0px";
-    }
-
-    // log the user out
-    logout(){
-        firebase.auth().signOut().then(()=>{
-            this.redirectToLogin()
-        }).catch((error)=>{
-            console.log("ERROR OCCURED", error);
-        });
-    }
-
-   // add post to the posts array
-
-    addPost({caption, imageLink}){
-        if (imageLink != ""){
-            const newPost = {id:cuid(),caption, imageLink };
-            this.posts = [...this.posts, newPost];
-        }
-    }
-    
-
-    //saves post to database under user's id
-    savePost(){
-        db.collection("users").doc(this.userId).set({
-            posts:this.posts
-        }).then(()=>{
-            console.log("Post saved successfully!");
-        }).catch((error)=>{
-            console.log("Error saving post:", error);
-        });
-
-        // this.displayFeed();
-    }
-
-    // add functionality to more options button
-    addMoreOptions(){
-      let elementsList = document.getElementsByClassName("more-btn");
-      for (let i = 0; i < elementsList.length; i++) { 
-          elementsList[i].addEventListener("click", ()=>{
-          this.$modal.style.display = "block";
-          this.$modal.style.visibility = "visible"; 
-
-        });
       }
-    
+      else {
+        // user must sign-in
+        this.redirectToLogin();
+      }
+    })
+  }
+
+  redirectToApp() {
+    this.$mainContainer.style.display = "block"; // show main container div
+    this.$loginUI.style.display = "none"; // hide login ui
+    this.$uploadSection.style.display = "none"; //hide upload section
+    this.getFeed();
+  }
+
+  redirectToLogin() {
+    this.$loginUI.style.display = "block"; // show login ui
+    this.$mainContainer.style.display = "none"; // hide main container
+    this.$uploadSection.style.display = "none"; // hide upload section
+    this.ui.start('#login-ui', {
+      callbacks: {
+        signInSuccessWithResult: (authResult, redirectUrl) => {
+          this.userId = authResult.user.uid; // set userId to uid of logged in user
+          this.redirectToApp();
+        }
+      },
+      signInOptions: [
+        firebase.auth.EmailAuthProvider.PROVIDER_ID,
+        firebase.auth.GoogleAuthProvider.PROVIDER_ID
+      ],
+    });
+  }
+
+  redirectToUpload() {
+    this.$mainContainer.style.display = "none"; // hide main content container
+    this.$uploadSection.style.display = "block"; // show upload section
+  }
+  // add event listerners to the document
+  addEventListeners() {
+    var files = [];
+
+
+  //   document.body.addEventListener("click", (event) =>{
+  //     this.deletePost(event);
+      
+  // })
+
+    // addd event listener for the logout button
+    this.$logoutBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      this.logout();
+    });
+
+    //add event listener for the create post button
+    this.$createBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      this.createPost();
+
+    });
+
+    this.$closeBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      //close create page and redirect to home
+      this.redirectToApp();
+    });
+
+    this.$postFiles.addEventListener("change", function (e) {
+      files = e.target.files;
+      for (let i = 0; i < files.length; i++) {
+        console.log(files[i]);
+      }
+    });
+
+    this.$shareBtn.addEventListener("click", function () {
+
+      //check if files are selected
+      if (files.length != 0) {
+        //go through all selected files
+        for (let i = 0; i < files.length; i++) {
+          //create storage reference
+          var storage = firebase.storage().ref(files[i].name);
+
+          // upload file
+          var upload = storage.put(files[i]);
+
+          //update progress bar
+          upload.on(
+            "state_changed",
+            function progress(snapshot) {
+              var percentage = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              document.getElementById("progress").value = percentage;
+
+            },
+
+            function error() {
+              alert("error uploading file");
+            },
+            function complete() {
+              document.getElementById("uploading").innerHTML += `${files[i].name} uploaded <br />`;
+              getFileUrl(files[i].name);
+              var postCaption = document.getElementById("post-caption").value;
+              var fileLink = document.getElementById("post-files").getAttribute("value");
+
+              app.addPost({ caption: postCaption, imageLink: fileLink }); // add post to posts array
+              document.getElementById("post-files").setAttribute("value", ""); // remove image link from value attr
+              app.savePost(); // save post to database
+
+            }
+          );
+        }
+      }
+      else {
+        alert("No file chosen");
+      }
+    });
+
+    function getFileUrl(filename) {
+      // create storage reference
+      var storage = firebase.storage().ref(filename);
+      //get file url
+      storage.getDownloadURL().then(function (url) {
+        document.getElementById("post-files").setAttribute("value", url);
+
+      }).catch(function (error) {
+        console.log("error encountered");
+        console.log(error);
+      });
     }
 
-    //get user posts
-    getFeed(){
-        {
-            const docRef = db.collection("users").doc(this.userId);
+    //close options modal
+    this.$cancelBtn.addEventListener("click", (event) => {
+      this.$modal.style.visibility = "hidden";
+    });
 
-            docRef.get().then((doc) => {
-                if (doc.exists) {
-                    console.log("Document data:", doc.data());
-                    this.posts = doc.data().posts;
-                    this.displayFeed();
-                } else {
-                    // doc.data() will be undefined in this case
-                    // add new user to database
-                    console.log("No such document!");
-                    db.collection("users").doc(this.userId).set({
-                        posts:[]
-                        })
-                        .then(()=>{
-                            console.log("User successfully created!");
-                        })
-                        .catch((error) =>{
-                            console.log("Error writting document: ", error);
-                        });
-                }
-            }).catch((error) => {
-                console.log("Error getting document:", error);
+
+    //delete post
+    // this.$delete.addEventListener("click", (event) => {
+    //   this.deletePost(event);
+    //   this.savePost();
+    //   console.log(this.posts)
+    // });
+  }
+
+  //redirect user to post page
+  createPost() {
+    this.$mainContainer.style.display = "none";
+    this.$uploadSection.style.display = "block";
+    this.$uploadSection.style.margin = "50px 0px 0px 0px";
+  }
+
+  // log the user out
+  logout() {
+    firebase.auth().signOut().then(() => {
+      this.redirectToLogin()
+    }).catch((error) => {
+      console.log("ERROR OCCURED", error);
+    });
+  }
+
+  // add post to the posts array
+
+  addPost({ caption, imageLink }) {
+    if (imageLink != "") {
+      const newPost = { id: cuid(), caption, imageLink };
+      this.posts = [...this.posts, newPost];
+    }
+  }
+
+
+  //saves post to database under user's id
+  savePost() {
+    db.collection("users").doc(this.userId).set({
+      posts: this.posts
+    }).then(() => {
+      console.log("Post saved successfully!");
+    }).catch((error) => {
+      console.log("Error saving post:", error);
+    });
+
+    // this.displayFeed();
+  }
+
+  deletePost(event) {
+    const $selectedPost = event.target.closest(".post");
+    let $deleteAction = document.querySelector(".delete");
+    console.log($selectedPost.id)
+    alert(event.target.closest(".delete"))
+    if ($selectedPost && $deleteAction) {
+      this.selectedPostId = $selectedPost.id;
+      $deleteAction.addEventListener("click", (event)=>{
+        this.deleteHelper(this.selectedPostId);
+      });
+    }
+    else{
+      alert("selected", $selectedPost.id)
+    }
+  }
+
+  deleteHelper(id) {
+    this.posts = this.posts.filter((post) => post.id != id);
+    console.log("posts after delete",this.posts)
+  }
+
+  // add functionality to more options button
+  addMoreOptions() {
+    let elementsList = document.getElementsByClassName("more-btn");
+    for (let i = 0; i < elementsList.length; i++) {
+      elementsList[i].addEventListener("click", () => {
+        this.$modal.style.display = "block";
+        this.$modal.style.visibility = "visible";
+
+      });
+    }
+
+  }
+
+  //get user posts
+  getFeed() {
+    {
+      const docRef = db.collection("users").doc(this.userId);
+
+      docRef.get().then((doc) => {
+        if (doc.exists) {
+          console.log("Document data:", doc.data());
+          this.posts = doc.data().posts;
+          this.displayFeed();
+        } else {
+          // doc.data() will be undefined in this case
+          // add new user to database
+          console.log("No such document!");
+          db.collection("users").doc(this.userId).set({
+            posts: []
+          })
+            .then(() => {
+              console.log("User successfully created!");
+            })
+            .catch((error) => {
+              console.log("Error writting document: ", error);
             });
         }
+      }).catch((error) => {
+        console.log("Error getting document:", error);
+      });
     }
+  }
 
-    displayFeed(){
-        
-        document.getElementById("posts-id").innerHTML = this.posts.map((post)=>
-            `<div class="post" id=${post.id}>
-            <div class="header">
+  displayFeed() {
+
+    document.getElementById("posts-id").innerHTML = this.posts.map((post) =>
+      `<div class="post" id=${post.id}>
+            <div class="header" id=${post.id}>
               <div class="profile-area">
                 <div class="post-pic">
                   <img
@@ -393,10 +431,10 @@ class App{
               <a class="post-btn">Post</a>
             </div>
           </div>`
-        ).join("");
-        this.addMoreOptions(); // add functionality to more options button
-    }
-    
+    ).join("");
+    this.addMoreOptions(); // add functionality to more options button
+  }
+
 }
 
 const app = new App();
