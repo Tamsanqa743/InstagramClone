@@ -7,6 +7,9 @@ class App {
     this.following = [];
     this.imageUrl = "";
     this.clickedPostId = "";
+    this.caption = "";
+    this.state = 0;
+    this.index = -1;
 
     this.$loginUI = document.querySelector("#login-ui");
     this.$mainContainer = document.querySelector(".main-container");
@@ -110,44 +113,55 @@ class App {
 
     this.$shareBtn.addEventListener("click", function () {
 
-      //check if files are selected
-      if (files.length != 0) {
-        //go through all selected files
-        for (let i = 0; i < files.length; i++) {
-          //create storage reference
-          var storage = firebase.storage().ref(files[i].name);
-
-          // upload file
-          var upload = storage.put(files[i]);
-
-          //update progress bar
-          upload.on(
-            "state_changed",
-            function progress(snapshot) {
-              var percentage = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              document.getElementById("progress").value = percentage;
-
-            },
-
-            function error() {
-              alert("error uploading file");
-            },
-            function complete() {
-              document.getElementById("uploading").innerHTML += `${files[i].name} uploaded <br />`;
-              getFileUrl(files[i].name);
-              var postCaption = document.getElementById("post-caption").value;
-              var fileLink = document.getElementById("post-files").getAttribute("value");
-
-              app.addPost({ caption: postCaption, imageLink: fileLink }); // add post to posts array
-              document.getElementById("post-files").setAttribute("value", ""); // remove image link from value attr
-              app.savePost(); // save post to database
-
-            }
-          );
+      if (app.state == 0){
+        //check if files are selected
+        if (files.length != 0) {
+          //go through all selected files
+          for (let i = 0; i < files.length; i++) {
+            //create storage reference
+            var storage = firebase.storage().ref(files[i].name);
+  
+            // upload file
+            var upload = storage.put(files[i]);
+  
+            //update progress bar
+            upload.on(
+              "state_changed",
+              function progress(snapshot) {
+                var percentage = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                document.getElementById("progress").value = percentage;
+  
+              },
+  
+              function error() {
+                alert("error uploading file");
+              },
+              function complete() {
+                document.getElementById("uploading").innerHTML += `${files[i].name} uploaded <br />`;
+                getFileUrl(files[i].name);
+                var postCaption = document.getElementById("post-caption").value;
+                var fileLink = document.getElementById("post-files").getAttribute("value");
+                app.addPost({ caption: postCaption, imageLink: fileLink }); // add post to posts array
+                document.getElementById("post-files").setAttribute("value", ""); // remove image link from value attr
+                app.savePost(); // save post to database
+  
+              }
+            );
+          }
+        }
+        else {
+          alert("No file chosen");
         }
       }
-      else {
-        alert("No file chosen");
+      else{
+        //update exisitng post
+        alert(app.state)
+        const post = app.getPost(app.clickedPostId);
+        var newCaption = document.getElementById("post-caption").value;
+        const updatedPost = { id: post.postObj.id, caption: newCaption, imageLink:post.postObj.imageLink};
+        app.posts[post.index] = updatedPost;
+        app.savePost();
+        app.state = 0;
       }
     });
 
@@ -175,12 +189,12 @@ class App {
 
       if (this.clickedPostId) {
           this.deleteHelper(this.clickedPostId);
+          this.savePost();
+          this.getFeed();
       }
       else{
         console.log("no post seleted!");
       }
-      this.savePost();
-      this.getFeed();
     });
 
     this.$editBtn.addEventListener("click", (event)=>{
@@ -441,7 +455,7 @@ class App {
   getPost(target){
     for (let i = 0; i < this.posts.length; i++){
       if (this.posts[i].id === target){
-        return this.posts[i];
+        return {postObj:this.posts[i], index:i};
       }
         
     }
@@ -450,8 +464,11 @@ class App {
   editPost(target){
 
     const post = this.getPost(target);
+    this.state = 1; // change state value to 1 
+    console.log(post)
+    this.index = post.index;
     this.createPost();
-    document.querySelector("#post-caption").innerHTML = post.caption;
+    document.querySelector("#post-caption").value = post.postObj.caption;
   }
 }
 
