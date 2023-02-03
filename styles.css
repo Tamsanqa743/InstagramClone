@@ -361,6 +361,9 @@ main {
     align-items: center;
 }
 
+#logout-btn{
+    cursor: pointer;
+}
 /* styles to modal */
 .modal{
     position: fixed;
@@ -383,6 +386,9 @@ main {
     
 }
 
+.create-post{
+    cursor: pointer;
+}
 .open-modal{
     visibility: visible;
 }
@@ -406,4 +412,15 @@ main {
 .report,.unfollow{
     color: red;
     font-weight: 500;
+}
+
+/* .confirm-text {
+    display: flex; 
+    flex-direction:column;
+    border-bottom: none;
+} */
+.confirm-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }

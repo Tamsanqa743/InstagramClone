@@ -6,10 +6,13 @@ class App {
     this.posts = [];
     this.following = [];
     this.imageUrl = "";
+    this.clickedPostId = "";
 
     this.$loginUI = document.querySelector("#login-ui");
     this.$mainContainer = document.querySelector(".main-container");
     this.$logoutBtn = document.querySelector("#logout-btn");
+    this.$name = document.querySelector(".name");
+    this.$username = document.querySelector(".username");
     this.$uploadSection = document.querySelector("#upload-form");
     this.$createBtn = document.querySelector(".create-post");
     this.$shareBtn = document.querySelector(".share-btn");
@@ -18,6 +21,7 @@ class App {
     this.$modal = document.querySelector(".modal");
     this.$cancelBtn = document.querySelector(".cancel");
     this.$delete = document.querySelector(".delete");
+    this.$editBtn = document.querySelector(".edit");
     this.ui = new firebaseui.auth.AuthUI(auth);
     this.handleAuth();
     this.addEventListeners();
@@ -27,6 +31,7 @@ class App {
     firebase.auth().onAuthStateChanged((user) => {
       if (user) {
         this.userId = String(user.uid);
+        this.setName(user);
         this.redirectToApp();
 
       }
@@ -35,6 +40,12 @@ class App {
         this.redirectToLogin();
       }
     })
+  }
+
+  setName(user){
+    // set username of logged in user in home page
+    this.$name.innerHTML = user.displayName;
+    this.$username.innerHTML = user.displayName;
   }
 
   redirectToApp() {
@@ -66,19 +77,14 @@ class App {
     this.$mainContainer.style.display = "none"; // hide main content container
     this.$uploadSection.style.display = "block"; // show upload section
   }
+
   // add event listerners to the document
   addEventListeners() {
     var files = [];
-
-
-  //   document.body.addEventListener("click", (event) =>{
-  //     this.deletePost(event);
-      
-  // })
-
+ 
     // addd event listener for the logout button
     this.$logoutBtn.addEventListener("click", (event) => {
-      event.preventDefault();
+      // event.preventDefault();
       this.logout();
     });
 
@@ -165,11 +171,21 @@ class App {
 
 
     //delete post
-    // this.$delete.addEventListener("click", (event) => {
-    //   this.deletePost(event);
-    //   this.savePost();
-    //   console.log(this.posts)
-    // });
+    this.$delete.addEventListener("click", (event) => {
+
+      if (this.clickedPostId) {
+          this.deleteHelper(this.clickedPostId);
+      }
+      else{
+        console.log("no post seleted!");
+      }
+      this.savePost();
+      this.getFeed();
+    });
+
+    this.$editBtn.addEventListener("click", (event)=>{
+      this.editPost(this.clickedPostId);
+    });
   }
 
   //redirect user to post page
@@ -211,35 +227,19 @@ class App {
     // this.displayFeed();
   }
 
-  deletePost(event) {
-    const $selectedPost = event.target.closest(".post");
-    let $deleteAction = document.querySelector(".delete");
-    console.log($selectedPost.id)
-    alert(event.target.closest(".delete"))
-    if ($selectedPost && $deleteAction) {
-      this.selectedPostId = $selectedPost.id;
-      $deleteAction.addEventListener("click", (event)=>{
-        this.deleteHelper(this.selectedPostId);
-      });
-    }
-    else{
-      alert("selected", $selectedPost.id)
-    }
-  }
-
+  //helper method to delete functionality
   deleteHelper(id) {
     this.posts = this.posts.filter((post) => post.id != id);
-    console.log("posts after delete",this.posts)
   }
 
   // add functionality to more options button
   addMoreOptions() {
     let elementsList = document.getElementsByClassName("more-btn");
     for (let i = 0; i < elementsList.length; i++) {
-      elementsList[i].addEventListener("click", () => {
+      elementsList[i].addEventListener("click", (event) => {
         this.$modal.style.display = "block";
         this.$modal.style.visibility = "visible";
-
+        this.clickedPostId = event.target.parentNode.id;
       });
     }
 
@@ -294,7 +294,9 @@ class App {
               </div>
               <div class="options">
                 <div
-                  class="Igw0E rBNOH YBx95 _4EzTm more-btn"
+                  class="Igw0E rBNOH YBx95 _4EzTm more-btn" 
+                  id=${post.id}
+                 
                   style="height: 24px; width: 24px; cursor:pointer;"
                 >
                   <svg
@@ -435,6 +437,22 @@ class App {
     this.addMoreOptions(); // add functionality to more options button
   }
 
+  //retrieve post from array
+  getPost(target){
+    for (let i = 0; i < this.posts.length; i++){
+      if (this.posts[i].id === target){
+        return this.posts[i];
+      }
+        
+    }
+  }
+
+  editPost(target){
+
+    const post = this.getPost(target);
+    this.createPost();
+    document.querySelector("#post-caption").innerHTML = post.caption;
+  }
 }
 
 const app = new App();

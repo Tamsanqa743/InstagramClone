@@ -9,6 +9,10 @@
     .navbar-inner {
         width: 100%;
     }
+
+    .navbar{
+        width: 100%;
+    }
 }
 
 @media (max-width: 640px) {
@@ -17,6 +21,7 @@
     }
     .navbar-inner {
         padding: 0;
+        width: 100%;
     }
     .content {
         margin: 0;
@@ -27,5 +32,17 @@
     .header {
         border: none;
         background: transparent;
+    }
+
+    .navbar{
+        width: 100%;
+    }
+
+    .modal-content{
+        width: 200px;
+    }
+
+    .search-bar{
+        display: none;
     }
 }
