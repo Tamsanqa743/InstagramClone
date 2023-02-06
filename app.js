@@ -9,7 +9,6 @@ class App {
     this.clickedPostId = "";
     this.caption = "";
     this.state = 0;
-    this.index = -1;
 
     this.$loginUI = document.querySelector("#login-ui");
     this.$mainContainer = document.querySelector(".main-container");
@@ -142,7 +141,7 @@ class App {
                 var postCaption = document.getElementById("post-caption").value;
                 var fileLink = document.getElementById("post-files").getAttribute("value");
                 app.addPost({ caption: postCaption, imageLink: fileLink }); // add post to posts array
-                document.getElementById("post-files").setAttribute("value", ""); // remove image link from value attr
+                document.getElementById("post-files").setAttribute("value", "null"); // remove image link from value attr
                 app.savePost(); // save post to database
   
               }
@@ -155,7 +154,6 @@ class App {
       }
       else{
         //update exisitng post
-        alert(app.state)
         const post = app.getPost(app.clickedPostId);
         var newCaption = document.getElementById("post-caption").value;
         const updatedPost = { id: post.postObj.id, caption: newCaption, imageLink:post.postObj.imageLink};
@@ -195,6 +193,7 @@ class App {
       else{
         console.log("no post seleted!");
       }
+      this.closeModal(); // close modal
     });
 
     this.$editBtn.addEventListener("click", (event)=>{
@@ -246,6 +245,12 @@ class App {
     this.posts = this.posts.filter((post) => post.id != id);
   }
 
+  //close modal
+  closeModal(){
+    this.$modal.style.visibility = "hidden";
+    this.$modal.style.display = "block";
+  }
+
   // add functionality to more options button
   addMoreOptions() {
     let elementsList = document.getElementsByClassName("more-btn");
@@ -253,7 +258,7 @@ class App {
       elementsList[i].addEventListener("click", (event) => {
         this.$modal.style.display = "block";
         this.$modal.style.visibility = "visible";
-        this.clickedPostId = event.target.parentNode.id;
+        this.clickedPostId = event.target.parentNode.id; // get id of clicked element/post
       });
     }
 
