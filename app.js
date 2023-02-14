@@ -114,8 +114,7 @@ class App {
     this.$shareBtn.addEventListener("click", function () {
       if (app.state == 0){
         //check if files are selected
-        app.uploadHandler(files);
-
+        app.uploadHandler(files)
       }
       else{
         //update exisitng post
@@ -124,19 +123,6 @@ class App {
         app.savePost();
       }
     });
-
-    // function getFileUrl(filename) {
-    //   // create storage reference
-    //   var storage = firebase.storage().ref(filename);
-    //   //get file url
-    //   storage.getDownloadURL().then(function (url) {
-    //     document.getElementById("post-files").setAttribute("value", url);
-
-    //   }).catch(function (error) {
-    //     console.log("error encountered");
-    //     console.log(error);
-    //   });
-    // }
 
     //close options modal
     this.$cancelBtn.addEventListener("click", (event) => {
@@ -172,75 +158,132 @@ class App {
 
   // upload handler
   uploadHandler(files){
-    if (files.length != 0) {
-      //go through all selected files
-      for (let i = 0; i < files.length; i++) {
-        //create storage reference
-        var storage = firebase.storage().ref(files[i].name);
 
-        // upload file
-        var upload = storage.put(files[i]);
+    if (files.length != 0){
 
-        //update progress bar
-        upload.on(
-          "state_changed",
-          function progress(snapshot) {
-            var percentage = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            document.getElementById("progress").value = percentage;
-
-          },
-
-          function error() {
-            alert("error uploading file");
-          },
-          function complete() {
-            document.getElementById("uploading").innerHTML += `${files[i].name} uploaded <br />`;
-            app.getFileUrl(files[i].name);
-            var postCaption = document.getElementById("post-caption").value;
-            app.addPost(postCaption, app.imageUrl ); // add post to posts array
-            app.savePost(); // save post to database
-
-          }
-        );
+        for (let i = 0; i < files.length; i++){
+          // Create a root reference
+          var storageRef = firebase.storage().ref();
+        
+            // Create the file metadata
+          var metadata = {
+          contentType: 'image/jpeg'
+          };
+        
+          // Upload file and metadata to the object 'images/mountains.jpg'
+          var uploadTask = storageRef.child('images/' + files[i].name).put(files[i], metadata);
+        
+          // Listen for state changes, errors, and completion of the upload.
+          uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, // or 'state_changed'
+          (snapshot) => {
+            // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+            var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            document.getElementById("progress").value = progress;
+            switch (snapshot.state) {
+              case firebase.storage.TaskState.PAUSED: // or 'paused'
+                console.log('Upload is paused');
+                break;
+              case firebase.storage.TaskState.RUNNING: // or 'running'
+                console.log('Upload is running');
+                break;
+            }
+          }, 
+          (error) => {
+            // A full list of error codes is available at
+            // https://firebase.google.com/docs/storage/web/handle-errors
+            switch (error.code) {
+              case 'storage/unauthorized':
+                // User doesn't have permission to access the object
+                alert("Operation not allwowed!");
+                break;
+              case 'storage/canceled':
+                // User canceled the upload
+                alert("Operation cancelled!");
+                break;
+        
+              case 'storage/unknown':
+                // Unknown error occurred, inspect error.serverResponse
+                alert("An error occured, try again!");
+                break;
+            }
+          }, 
+          () => {
+            // Upload completed successfully, now we can get the download URL
+            uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+              app.caption = document.getElementById("post-caption").value; // retrieve caption from upload div
+              app.addPost(app.caption, downloadURL);
+              app.savePost(); // save posts to firebase
+              document.getElementById("uploading").innerHTML += `${files[i].name} uploaded <br />`;
+        
+            });
+          });  
+        }
       }
-    }
-    else {
-      alert("No file chosen");
-    }
   }
 
   editHandler(files, index, postId, imageSrc){
     if (files.length != 0 ) {
-      //go through all selected files
-      for (let i = 0; i < files.length; i++) {
-        //create storage reference
-        var storage = firebase.storage().ref(files[i].name);
-
-        // upload file
-        var upload = storage.put(files[i]);
-
-        //update progress bar
-        upload.on(
-          "state_changed",
-          function progress(snapshot) {
-            var percentage = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            document.getElementById("progress").value = percentage;
-
-          },
-
-          function error() {
-            alert("error uploading file");
-          },
-          function complete() {
-            document.getElementById("uploading").innerHTML += `${files[i].name} uploaded <br />`;
-            app.getFileUrl(files[i].name);
-            var postCaption = document.getElementById("post-caption").value;
-            app.posts[index] = { id:postId, caption: postCaption, imageLink: app.imageUrl } //update post in array
-            app.savePost();
-            app.imageLink = ""; // reset link
+      // if user selected new file
+    
+            for (let i = 0; i < files.length; i++){
+              // Create a root reference
+              var storageRef = firebase.storage().ref();
             
-          }
-        );
+                // Create the file metadata
+              var metadata = {
+              contentType: 'image/jpeg'
+              };
+            
+              // Upload file and metadata to the object 'images/mountains.jpg'
+              var uploadTask = storageRef.child('images/' + files[i].name).put(files[i], metadata);
+            
+              // Listen for state changes, errors, and completion of the upload.
+              uploadTask.on(firebase.storage.TaskEvent.STATE_CHANGED, // or 'state_changed'
+              (snapshot) => {
+                // Get task progress, including the number of bytes uploaded and the total number of bytes to be uploaded
+                var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                document.getElementById("progress").value = progress;
+                switch (snapshot.state) {
+                  case firebase.storage.TaskState.PAUSED: // or 'paused'
+                    console.log('Upload is paused');
+                    break;
+                  case firebase.storage.TaskState.RUNNING: // or 'running'
+                    console.log('Upload is running');
+                    break;
+                }
+              }, 
+              (error) => {
+                // A full list of error codes is available at
+                // https://firebase.google.com/docs/storage/web/handle-errors
+                switch (error.code) {
+                  case 'storage/unauthorized':
+                    // User doesn't have permission to access the object
+                    alert("Operation not allowed")
+                    break;
+                  case 'storage/canceled':
+                    // User canceled the upload
+                    alert("Operation cancelled")
+                    break;
+            
+                  // ...
+            
+                  case 'storage/unknown':
+                    // Unknown error occurred, inspect error.serverResponse
+                    alert("An error occured, try again!")
+                    break;
+                }
+              }, 
+            () => {
+              // Upload completed successfully, now we can get the download URL
+              uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+              app.caption = document.getElementById("post-caption").value; // retrieve caption from upload div
+              console.log(downloadURL)
+              app.posts[index] = { id:postId, caption: app.caption, imageLink: downloadURL } //update post in array
+              app.savePost(); // save posts to firebase
+              document.getElementById("uploading").innerHTML += `${files[i].name} uploaded <br />`;
+            
+          });
+        });  
       }
     }
     else {
