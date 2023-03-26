@@ -412,14 +412,14 @@ class App {
                 </div>
                 <span class="profile-name">jayshetty</span>
               </div>
-              <div class="options">
+              <div class="options" id=${post.id}>
                 <div
                   class="Igw0E rBNOH YBx95 _4EzTm more-btn" 
                   id=${post.id}
                  
                   style="height: 24px; width: 24px; cursor:pointer;"
                 >
-                  <svg
+                  <svg id=${post.id}
                     aria-label="More options"
                     class="_8-yf5"
                     fill="#262626"
