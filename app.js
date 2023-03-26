@@ -127,6 +127,7 @@ class App {
     //close options modal
     this.$cancelBtn.addEventListener("click", (event) => {
       this.$modal.style.visibility = "hidden";
+      console.log(this.posts)
     });
 
 
@@ -329,6 +330,23 @@ class App {
 
   //helper method to delete functionality
   deleteHelper(id) {
+    var storage =  firebase.storage()
+    console.log(storage)
+    for (let i = 0; i < this.posts.length; i++){
+      if (this.posts[i].id === id){
+        const imgLink = this.posts[i].imageLink;
+        // Create a reference to the file to delete
+        const fileRef = storage.refFromURL(imgLink);
+        console.log('file ref', fileRef)
+
+        // Delete the file
+        fileRef.delete().then(() => {
+          // File deleted successfully
+        }).catch((error) => {
+          // Uh-oh, an error occurred!
+        });
+      }
+    }
     this.posts = this.posts.filter((post) => post.id != id);
   }
 
@@ -575,6 +593,10 @@ class App {
     this.index = post.index;
     this.createPost();
     document.querySelector("#post-caption").value = post.postObj.caption;
+  }
+
+
+  deleteFileOnDB(imgLink){
   }
 }
 
