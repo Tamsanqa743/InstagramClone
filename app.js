@@ -595,8 +595,9 @@ class App {
     document.querySelector("#post-caption").value = post.postObj.caption;
   }
 
-
-  deleteFileOnDB(imgLink){
+  follow(user){
+    //add user to people current user follows
+    this.following.push(user);
   }
 }
 
