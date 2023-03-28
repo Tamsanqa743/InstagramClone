@@ -102,6 +102,7 @@ class App {
       //close create page and redirect to home
       this.redirectToApp();
       this.closeModal(); // close modal
+      document.getElementById("uploading").innerHTML = "";
     });
 
     this.$postFiles.addEventListener("change", function (e) {
